@@ -1,4 +1,27 @@
--- main.lua - entry point of your Love2D project
+--[[
+	    8                                          
+	    8  eeeee    e  eeeee eeeee eeeee ee   e    
+	    8e 8  88    8  8  88 8   8 8  88 88   8    
+	    88 8   8    8e 8   8 8eee8 8   8 88  e8    
+	e   88 8   8 e  88 8   8 88    8   8  8  8     
+	8eee88 8eee8 8ee88 8eee8 88    8eee8  8ee8  
+	        🐢 TurtleTech · Crafted in Lua 🍕
+
+  Project : ko
+  Copyleft (ɔ) 2025 Jojopov (Franz Bonaparta)
+  License : GNU GPLv3 or later
+  https://www.gnu.org/licenses/
+]]
+-- This program is free software: you can redistribute it and/or modify
+-- it under the terms of the GNU General Public License as published by
+-- the Free Software Foundation, either version 3 of the License, or
+-- (at your option) any later version.
+--
+-- This program is distributed in the hope that it will be useful,
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+-- See <https://www.gnu.org/licenses/>.                                        
+
 local TextBox = require("textBox")
 local textBox = TextBox(10, 10, 200)
 -- Function called only once at the beginning
