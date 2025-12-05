@@ -34,6 +34,7 @@ end
 function love.update(dt)
     -- dt = delta time = time since last frame
     -- Used for fluid movements
+    textBox:update(dt)
 end
 
 -- Function called after each update to draw on screen
@@ -51,6 +52,9 @@ function love.keypressed(key)
     else
         textBox:keypressed(key)
     end
+end
+function love.mousepressed(mx,my,button)
+    textBox:mousepressed(mx,my,button)
 end
 
 function love.textinput(t) textBox:setText(t) end
