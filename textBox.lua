@@ -5,20 +5,20 @@ local twemoji=love.graphics.newFont("openmojiblack.ttf",14)
 local notoEmoji=love.graphics.newFont("NotoEmoji-VariableFont_wght.ttf",22)
 local utf8 = require("utf8")
 
-function TextBox:new(x, y, w)
+function TextBox:new(x, y, w,font)
     self.x = x
     self.y = y
     self.width = w
     self.height = 0
     self.text = ""
     self.canvas = nil
-    love.graphics.setFont(notoEmoji)
+    self.font=love.graphics.setFont(font) or love.graphics.setFont(defaultFont)
     self:setCanvas()
 end
 
 function TextBox:setCanvas()
-    local _, wrappedtext = notoEmoji:getWrap(self.text, self.width)
-    local height = notoEmoji:getHeight()
+    local _, wrappedtext = self.font:getWrap(self.text, self.width)
+    local height = self.font:getHeight()
     self.height = height * #wrappedtext
     self.canvas = love.graphics.newCanvas(self.width, self.height)
     love.graphics.setCanvas(self.canvas)
