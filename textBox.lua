@@ -63,7 +63,7 @@ function TextBox:draw()
     end
 end
 function TextBox:getCharIndexFromPixel(mx)
-    local x=mx- self.x+self.padding
+    local x=mx- (self.x+self.padding)
     if x < 0 then return 1 end
     local acc = 0
      for i = 1, #self.text do
