@@ -1,6 +1,6 @@
 -- Configuration function of Love2D
 function love.conf(w)
-    w.title = ""
+    w.title = "textBox"
     w.window.height = 600
     w.window.width = 800
     w.version = "11.4"
