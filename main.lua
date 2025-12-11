@@ -23,7 +23,7 @@
 -- See <https://www.gnu.org/licenses/>.                                        
 
 local TextBox = require("textBox")
-local textBox = TextBox(10, 10, 200)
+local textBox = TextBox(50,50,300,30)
 -- Function called only once at the beginning
 function love.load()
     -- Initialization of resources (images, sounds, variables)
@@ -57,4 +57,4 @@ function love.mousepressed(mx,my,button)
     textBox:mousepressed(mx,my,button)
 end
 
-function love.textinput(t) textBox:setText(t) end
+function love.textinput(t) textBox:textinput(t) end

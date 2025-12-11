@@ -1,127 +1,111 @@
 local Object = require("libs.classic")
 local TextBox = Object:extend()
-local defaultFont = love.graphics.newFont("NotoSans-Regular.ttf",14)
-local twemoji=love.graphics.newFont("openmojiblack.ttf",14)
-local notoEmoji=love.graphics.newFont("NotoEmoji-VariableFont_wght.ttf",22)
-local utf8 = require("utf8")
 
-function TextBox:new(x, y, w)
+local font = love.graphics.newFont("NotoSans-Regular.ttf", 14)
+
+function TextBox:new(x, y, w, h)
     self.x = x
     self.y = y
-    self.width = w
-    self.height = 0
+    self.w = w
+    self.h = h
+
     self.text = ""
-    self.canvas = nil
-    self.focused=false
-    self.cursorPos = #self.text + 1
-    self.font=font or defaultFont
-    love.graphics.setFont(self.font)
-     self.cursorBlinkTime = 0 -- Timer used for blinking effect
-    self.cursorVisible = true -- Whether the cursor is currently visible
-    self.placeholder = "Write here"
-    self.cursorState = "arrow"
-    self:setCanvas()
+    self.focused = false
+
+    self.cursor={col=1,line=1}
+    self.cursorVisible = true
+    self.cursorTimer = 0
+
+    self.padding = 4
 end
 
-function TextBox:setCanvas()
-    local _, wrappedtext = self.font:getWrap(self.text, self.width)
-    local height = self.font:getHeight()
-    self.height = height * #wrappedtext
-    self.canvas = love.graphics.newCanvas(self.width, self.height)
-    love.graphics.setCanvas(self.canvas)
-    love.graphics.clear()
-    love.graphics.setColor(1, 1, 1)
-    love.graphics.rectangle("fill", 0, 0, self.width, self.height)
-        local paddingX = 4
-    if #self.text > 0 then
-        love.graphics.setColor(0, 0, 0)
-    
-    love.graphics.printf(self.text, paddingX, 0, self.width, "left")
+function TextBox:update(dt)
+    if self.focused then
+        self.cursorTimer = self.cursorTimer + dt
+        if self.cursorTimer >= 0.5 then
+            self.cursorTimer = 0
+            self.cursorVisible = not self.cursorVisible
+        end
     else
-        -- placeholder
-        love.graphics.setColor(0, 0, 0, 0.6)
-        love.graphics.printf(self.placeholder, paddingX, 0, self.width, "left")
+        -- si pas focus, on affiche le curseur fixe ou pas du tout
+        self.cursorVisible = false
+        self.cursorTimer = 0
     end
-    love.graphics.setCanvas()
-    love.graphics.setColor(1, 1, 1)
-end
-
-function TextBox:setText(t)
-        if not self.focused then return end
-       -- self.text = self.text == "" and t or (self.text .. t)
- local before = self.text:sub(1, self.cursorPos - 1)
-    local after = self.text:sub(self.cursorPos)
-    local potentialText = before .. t .. after
-    -- Only allow insertion if it doesn't exceed the field's visual width
-    if self.font:getWidth(self.text) < self.width and self.focused then
-                self.text = potentialText
-        self.cursorPos = self.cursorPos + utf8.len(self.text)
-    end
-    --self.text = self.text == "" and t or (self.text .. t)
-    self:setCanvas()
-end
-
-function TextBox:back()
-    local len = utf8.len(self.text)
-    if not len or len <= 0 then return end
-
-    local byteStart = utf8.offset(self.text, len)  -- start of last character
-    self.text = self.text:sub(1, byteStart - 1)
-    self:setCanvas()
-end
-
-function TextBox:delete()
-    self.text = ""
-    self:setCanvas()
 end
 
 function TextBox:draw()
-    if self.canvas then love.graphics.draw(self.canvas, self.x, self.y) end
-if self.focused and self.cursorVisible then
-        local textBeforeCursor = self.text:sub(1, self.cursorPos - 1)
-        local paddingX = 4
-        local cursorX = self.x + self.font:getWidth(textBeforeCursor) + paddingX
-        love.graphics.setColor(0, 0, 0)
-        love.graphics.setLineWidth(1)
-        love.graphics.line(cursorX, self.y, cursorX, self.y + self.height)
-        love.graphics.setColor(1, 1, 1)
+    love.graphics.setFont(font)
+
+    -- fond
+    love.graphics.setColor(1, 1, 1)
+    love.graphics.rectangle("fill", self.x, self.y, self.w, self.h)
+
+    -- bord
+    love.graphics.setColor(0, 0, 0)
+    love.graphics.rectangle("line", self.x, self.y, self.w, self.h)
+
+    -- texte
+    love.graphics.print(self.text, self.x + self.padding, self.y + self.padding)
+
+    -- curseur à la fin
+    if self.focused and self.cursorVisible then
+        local before=self.text:sub(1,self.cursor.col-1)or ""
+        local textWidth = font:getWidth(before)
+        local lineHeight = font:getHeight()
+
+        local cx = self.x + self.padding + textWidth
+        local cy = self.y + self.padding
+
+        love.graphics.line(
+            cx, cy,
+            cx, cy + lineHeight
+        )
     end
 end
-function TextBox:mousepressed(mx,my,button)
-        if button == 1 and not self.focused then
-        self.focused = mx >= self.x and mx <= self.x + self.width and my >=
-                           self.y and my <= self.y + self.height
-        -- desactivate if click outside
-    elseif button == 1 and self.focused then
-        self.focused = (mx < self.x or mx > self.x + self.width) and
-                           (my < self.y or my > self.y + self.height)
-    end
+
+function TextBox:mousepressed(mx, my, button)
+    if button ~= 1 then return end
+
+    self.focused =
+        mx >= self.x and mx <= self.x + self.w and
+        my >= self.y and my <= self.y + self.h
+end
+
+function TextBox:textinput(t)
+    if not self.focused then return end
+    -- ici on part du principe : ASCII basique, on ajoute à la fin
+    local before = self.text:sub(1, self.cursor.col - 1)
+    local after  = self.text:sub(self.cursor.col)
+
+    self.text = before .. t .. after
+    self.cursor.col = self.cursor.col + 1
 end
 
 function TextBox:keypressed(key)
     if not self.focused then return end
-    local keys = {"return", "backspace", "delete"}
-    local actions = {
-        function() self:setText("\n") end, function() self:back() end,
-        function() self:delete() end
-    }
-    for i, k in ipairs(keys) do if key == k then actions[i]() end end
-end
-function TextBox:update(dt)
-     if self.focused then
-        self.cursorBlinkTime = self.cursorBlinkTime + dt
-        if self.cursorBlinkTime > 0.5 then
-            self.cursorBlinkTime = 0
-            self.cursorVisible = not self.cursorVisible -- Toggle cursor visibility
+
+    if key == "backspace" then
+         if self.cursor.col > 1 then
+            -- supprime le char juste avant le curseur
+            local before = self.text:sub(1, self.cursor.col - 2)
+            local after  = self.text:sub(self.cursor.col)
+
+            self.text = before .. after
+            self.cursor.col = self.cursor.col - 1
         end
+        return
     end
-    -- change mouse cursor when hover the field
-    local mouseX, mouseY = love.mouse.getPosition()
-    local newCursor = (mouseX > self.x and mouseX < self.x + self.width and
-                          mouseY > self.y) and "ibeam" or "arrow"
-    if self.cursorState ~= newCursor then
-        love.mouse.setCursor(love.mouse.getSystemCursor(newCursor))
-        self.cursorState = newCursor
+    if key == "left" then
+        self.cursor.col = math.max(1, self.cursor.col - 1)
+        return
     end
+
+    -- FLECHE DROITE
+    if key == "right" then
+        self.cursor.col = math.min(#self.text + 1, self.cursor.col + 1)
+        return
+    end
+
 end
+
 return TextBox
