@@ -28,6 +28,7 @@ local textBox = TextBox(50,50,300,30)
 function love.load()
     -- Initialization of resources (images, sounds, variables)
     love.graphics.setBackgroundColor(0.1, 0.1, 0.1) -- dark grey background
+    textBox.focused=true
 end
 
 -- Function called at each frame, it updates the logic of the game
@@ -57,4 +58,4 @@ function love.mousepressed(mx,my,button)
     textBox:mousepressed(mx,my,button)
 end
 
-function love.textinput(t) textBox:textinput(t) end
+function love.textinput(t) textBox:addToLines(t) end
