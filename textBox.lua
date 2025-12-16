@@ -69,7 +69,7 @@ function TextBox:draw()
         --drawing the cursor
         love.graphics.line(
             cx, cy,
-            cx, (cy + height)
+            cx, (cy + height-self.padding)
         )
     end
 end
@@ -162,6 +162,23 @@ function TextBox:adjustLines(index)
         self:resetLocation(index,remain)
     end
 end
+function TextBox:readjustDeletedChar(lineIndex)
+    local nextLine=self.lines[lineIndex+1]
+    if not nextLine then return end
+    local lastLine=""
+    local char=""
+    for index = #self.lines, lineIndex+1, -1 do
+        lastLine=self.lines[index]
+        char=lastLine:sub(1,1)
+        self.lines[index]=lastLine:sub(2,#lastLine)
+        self.lines[index-1]=self.lines[index-1]..char
+    end
+    --erase last line if it's empty
+    if #self.lines[#self.lines]==0 then
+        table.remove(self.lines,#self.lines)
+    end
+    self:adjustLines(lineIndex)
+end
 
 function TextBox:mousepressed(mx, my, button)
     if button ~= 1 then return end
@@ -196,8 +213,16 @@ end
 function TextBox:keypressed(key)
     if not self.focused then return end
     local currentLine = self.lines[self.cursor.line]
+    if key=="delete"then
+        local col=self.cursor.col
+        self:readjustDeletedChar(self.cursor.line)
+        self.cursor.col=col
+        self:setCanvas()
+        return
+    end
     if key == "backspace" then
-        if self.cursor.col > 1 then
+        if self.cursor.line==1 and self.cursor.col==1 then return 
+        elseif self.cursor.col > 1 then
             -- deletes the character just before the cursor
             local before                 = currentLine:sub(1, self.cursor.col - 2)
             local after                  = currentLine:sub(self.cursor.col)
@@ -205,12 +230,17 @@ function TextBox:keypressed(key)
             self.lines[self.cursor.line] = before .. after
 
             if #self.lines[self.cursor.line] == 0 then
+                if not self.lines[self.cursor.line - 1]then
+                    return
+                end
                 self.cursor.col = #self.lines[self.cursor.line - 1]
                 self.cursor.line = self.cursor.line - 1
             else
                 self.cursor.col = self.cursor.col - 1
             end
-            self:adjustLines(self.cursor.line)
+            self:readjustDeletedChar(self.cursor.line)
+            
+            --self:adjustLines(self.cursor.line)
             self:setCanvas()
         elseif self.cursor.line > 1 and self.cursor.col == 1 then
             local current = table.remove(self.lines, self.cursor.line)
@@ -218,7 +248,8 @@ function TextBox:keypressed(key)
             self.cursor.line = self.cursor.line - 1
             self.cursor.col = #self.lines[self.cursor.line] + 1
             self.lines[self.cursor.line] = self.lines[self.cursor.line] .. current
-            self:adjustLines(self.cursor.line)
+            self:readjustDeletedChar(self.cursor.line)
+            --self:adjustLines(self.cursor.line)
             self:setCanvas()
         end
         return
@@ -235,17 +266,19 @@ function TextBox:keypressed(key)
     if key == "up" then
         if self.lines[self.cursor.line - 1] then
             self.cursor.line = self.cursor.line - 1
+            currentLine = self.lines[self.cursor.line]
             return
         end
     end
     if key == "down" then
         if self.lines[self.cursor.line + 1] then
             self.cursor.line = self.cursor.line + 1
+            currentLine = self.lines[self.cursor.line]
             self.cursor.col = #currentLine >= self.cursor.col and self.cursor.col or #currentLine + 1
             return
         end
     end
-    if key == "return" then
+    if key == "return"or key=="kpenter" then
         local line = self.lines[self.cursor.line]
         local before = line:sub(1, self.cursor.col - 1)
         local after = line:sub(self.cursor.col)
