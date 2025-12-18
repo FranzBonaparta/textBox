@@ -1,10 +1,10 @@
 --[[
-	    8                                          
-	    8  eeeee    e  eeeee eeeee eeeee ee   e    
-	    8e 8  88    8  8  88 8   8 8  88 88   8    
-	    88 8   8    8e 8   8 8eee8 8   8 88  e8    
-	e   88 8   8 e  88 8   8 88    8   8  8  8     
-	8eee88 8eee8 8ee88 8eee8 88    8eee8  8ee8  
+	    8
+	    8  eeeee    e  eeeee eeeee eeeee ee   e
+	    8e 8  88    8  8  88 8   8 8  88 88   8
+	    88 8   8    8e 8   8 8eee8 8   8 88  e8
+	e   88 8   8 e  88 8   8 88    8   8  8  8
+	8eee88 8eee8 8ee88 8eee8 88    8eee8  8ee8
 	        🐢 TurtleTech · Crafted in Lua 🍕
 
   Project : ko
@@ -20,15 +20,17 @@
 -- This program is distributed in the hope that it will be useful,
 -- but WITHOUT ANY WARRANTY; without even the implied warranty of
 -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
--- See <https://www.gnu.org/licenses/>.                                        
+-- See <https://www.gnu.org/licenses/>.
 
 local TextBox = require("textBox")
-local textBox = TextBox(50,50,300,30)
+local textBox = TextBox(50, 50, 300, 30)
+local LineManager = require("lineManager")
+
 -- Function called only once at the beginning
 function love.load()
     -- Initialization of resources (images, sounds, variables)
     love.graphics.setBackgroundColor(0.1, 0.1, 0.1) -- dark grey background
-    textBox.focused=true
+    textBox.focused = true
 end
 
 -- Function called at each frame, it updates the logic of the game
@@ -54,8 +56,12 @@ function love.keypressed(key)
         textBox:keypressed(key)
     end
 end
-function love.mousepressed(mx,my,button)
-    textBox:mousepressed(mx,my,button)
+
+function love.mousepressed(mx, my, button)
+    textBox:mousepressed(mx, my, button)
 end
 
-function love.textinput(t) textBox:addToLines(t) end
+function love.textinput(t)
+    LineManager.addToLines(t, textBox)
+    textBox:setCanvas()
+end

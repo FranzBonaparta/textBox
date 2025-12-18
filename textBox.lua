@@ -1,7 +1,7 @@
 local Object = require("libs.classic")
 local TextBox = Object:extend()
-
 local font = love.graphics.newFont("NotoSans-Regular.ttf", 14)
+local LineManager=require("lineManager")
 
 function TextBox:new(x, y, w, lh)
     self.x = x
@@ -35,7 +35,7 @@ function TextBox:setCanvas()
     --print(#self.lines, self.lineHeight * #self.lines)
     -- border
 
-    if #self.lines[1] > 0 or #self.lines > 1 then
+    if #self.lines>=1 and #self.lines[1] > 0 then
         love.graphics.setColor(0, 0, 0)
     else
         love.graphics.setColor(0, 0, 0, 0.4)
@@ -69,7 +69,7 @@ function TextBox:draw()
         --drawing the cursor
         love.graphics.line(
             cx, cy,
-            cx, (cy + height-self.padding)
+            cx, (cy + height - self.padding)
         )
     end
 end
@@ -98,87 +98,6 @@ function TextBox:getCharIndexFromPixel(mx, my)
     -- clic after the end
     return #line + 1, y
 end
-function TextBox:resetLocation(index,remain)
-            --reset cursor's location
-        if self.cursor.line == index then
-            if self.cursor.col > #remain then
-                self.cursor.line = self.cursor.line + 1
-                self.cursor.col = self.cursor.col - #remain
-            end
-        end
-        --cascade
-        self:adjustLines(index + 1)
-end
-function TextBox:addToLines(t)
-    if not self.focused then return end
-
-    local text = self.lines[self.cursor.line]
-    local before = text:sub(1, self.cursor.col - 1)
-    local after = text:sub(self.cursor.col)
-    --reconstruct current line
-    local newLine = before .. t .. after
-    --update the buffer
-    self.lines[self.cursor.line] = newLine
-    --clean wrap
-    self:adjustLines(self.cursor.line)
-    --move the cursor
-    self.cursor.col = self.cursor.col + 1
-    self:setCanvas()
-end
-
-function TextBox:adjustLines(index)
-    local length = font:getWidth(self.lines[index])
-    if length < self.w then
-        return --no wrap needed
-    end
-    --find the last space
-    local reverse = self.lines[index]:reverse()
-    local spaceIndex = reverse:find("%s")
-    if spaceIndex then
-        --convert reverse index to normal
-        spaceIndex = #self.lines[index] - spaceIndex + 1
-        local moved = self.lines[index]:sub(spaceIndex + 1)
-        local remain = self.lines[index]:sub(1, spaceIndex)
-
-        --apply correctly
-        self.lines[index] = remain
-        --next line
-        self.lines[index + 1] = moved .. (self.lines[index + 1] or "")
-        --reset cursor's location
-        self:resetLocation(index,remain)
-    else
-        --if no space we cut the word
-        local cutchar = self.lines[index]:sub(#self.lines[index])
-        local remain = self.lines[index]:sub(1, #self.lines[index] - 1)
-        length = font:getWidth(remain)
-        while length >= self.w do
-            cutchar = remain:sub(#remain) .. cutchar
-            remain = remain:sub(1, #remain - 1)
-            length = font:getWidth(remain)
-        end
-        self.lines[index] = remain
-        self.lines[index + 1] = cutchar .. (self.lines[index + 1] or "")
-        --reset cursor's location
-        self:resetLocation(index,remain)
-    end
-end
-function TextBox:readjustDeletedChar(lineIndex)
-    local nextLine=self.lines[lineIndex+1]
-    if not nextLine then return end
-    local lastLine=""
-    local char=""
-    for index = #self.lines, lineIndex+1, -1 do
-        lastLine=self.lines[index]
-        char=lastLine:sub(1,1)
-        self.lines[index]=lastLine:sub(2,#lastLine)
-        self.lines[index-1]=self.lines[index-1]..char
-    end
-    --erase last line if it's empty
-    if #self.lines[#self.lines]==0 then
-        table.remove(self.lines,#self.lines)
-    end
-    self:adjustLines(lineIndex)
-end
 
 function TextBox:mousepressed(mx, my, button)
     if button ~= 1 then return end
@@ -196,65 +115,16 @@ function TextBox:mousepressed(mx, my, button)
     end
 end
 
-function TextBox:update(dt)
-    if self.focused then
-        self.cursorTimer = self.cursorTimer + dt
-        if self.cursorTimer >= 0.5 then
-            self.cursorTimer = 0
-            self.cursorVisible = not self.cursorVisible
-        end
-    else
-        -- If there is no focus, the cursor is displayed as fixed or not at all.
-        self.cursorVisible = false
-        self.cursorTimer = 0
-    end
-end
-
 function TextBox:keypressed(key)
     if not self.focused then return end
     local currentLine = self.lines[self.cursor.line]
-    if key=="delete"then
-        local col=self.cursor.col
-        self:readjustDeletedChar(self.cursor.line)
-        self.cursor.col=col
+    if key == "backspace" then
+
+        LineManager.deleteNearestChar(self)
         self:setCanvas()
         return
     end
-    if key == "backspace" then
-        if self.cursor.line==1 and self.cursor.col==1 then return 
-        elseif self.cursor.col > 1 then
-            -- deletes the character just before the cursor
-            local before                 = currentLine:sub(1, self.cursor.col - 2)
-            local after                  = currentLine:sub(self.cursor.col)
-
-            self.lines[self.cursor.line] = before .. after
-
-            if #self.lines[self.cursor.line] == 0 then
-                if not self.lines[self.cursor.line - 1]then
-                    return
-                end
-                self.cursor.col = #self.lines[self.cursor.line - 1]
-                self.cursor.line = self.cursor.line - 1
-            else
-                self.cursor.col = self.cursor.col - 1
-            end
-            self:readjustDeletedChar(self.cursor.line)
-            
-            --self:adjustLines(self.cursor.line)
-            self:setCanvas()
-        elseif self.cursor.line > 1 and self.cursor.col == 1 then
-            local current = table.remove(self.lines, self.cursor.line)
-
-            self.cursor.line = self.cursor.line - 1
-            self.cursor.col = #self.lines[self.cursor.line] + 1
-            self.lines[self.cursor.line] = self.lines[self.cursor.line] .. current
-            self:readjustDeletedChar(self.cursor.line)
-            --self:adjustLines(self.cursor.line)
-            self:setCanvas()
-        end
-        return
-    end
-    if key == "left" then
+        if key == "left" then
         self.cursor.col = math.max(1, self.cursor.col - 1)
         return
     end
@@ -267,6 +137,7 @@ function TextBox:keypressed(key)
         if self.lines[self.cursor.line - 1] then
             self.cursor.line = self.cursor.line - 1
             currentLine = self.lines[self.cursor.line]
+            self.cursor.col = #currentLine >= self.cursor.col and self.cursor.col or #currentLine + 1
             return
         end
     end
@@ -278,21 +149,25 @@ function TextBox:keypressed(key)
             return
         end
     end
-    if key == "return"or key=="kpenter" then
-        local line = self.lines[self.cursor.line]
-        local before = line:sub(1, self.cursor.col - 1)
-        local after = line:sub(self.cursor.col)
-        --look if next line exist
-        self.lines[self.cursor.line + 1] =
-            self.lines[self.cursor.line + 1] and after .. self.lines[self.cursor.line + 1]
-            or after
-        self:adjustLines(self.cursor.line + 1)
-        self.lines[self.cursor.line] = before
-        self.cursor.line = self.cursor.line + 1
-        self.cursor.col = 1
-        self:setCanvas()
-        return
-    end
 end
 
+function TextBox:update(dt)
+    if self.focused then
+        local keys={"left","right","up","down","delete","backspace"}
+        self.cursorTimer = self.cursorTimer + dt
+        if self.cursorTimer >= 0.5 then
+--[[            for _, key in ipairs(keys) do
+                if love.keyboard.isDown(key) then
+                   self:keypressed(key) 
+                end
+            end]]
+            self.cursorTimer = 0
+            self.cursorVisible = not self.cursorVisible
+        end
+    else
+        -- If there is no focus, the cursor is displayed as fixed or not at all.
+        self.cursorVisible = false
+        self.cursorTimer = 0
+    end
+end
 return TextBox
