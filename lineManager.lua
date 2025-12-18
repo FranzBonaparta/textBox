@@ -24,7 +24,7 @@ function LineManager.addToLines(t, box)
   box.cursor.col = box.cursor.col + 1
 end
 
-function LineManager.deleteNearestChar(box)
+function LineManager.deletePreviousChar(box)
   local lineIndex = box.cursor.line
   if lineIndex == 1 and box.cursor.col == 1 then
     return

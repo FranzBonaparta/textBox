@@ -120,7 +120,7 @@ function TextBox:keypressed(key)
     local currentLine = self.lines[self.cursor.line]
     if key == "backspace" then
 
-        LineManager.deleteNearestChar(self)
+        LineManager.deletePreviousChar(self)
         self:setCanvas()
         return
     end
