@@ -7,7 +7,7 @@
 	8eee88 8eee8 8ee88 8eee8 88    8eee8  8ee8
 	        🐢 TurtleTech · Crafted in Lua 🍕
 
-  Project : ko
+  Project : textBox
   Copyleft (ɔ) 2025 Jojopov (Franz Bonaparta)
   License : GNU GPLv3 or later
   https://www.gnu.org/licenses/
