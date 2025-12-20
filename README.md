@@ -1,5 +1,7 @@
 # textBox
 
+⚠️ This component is still in the prototyping phase. Do not use in production without modification. Contributions and suggestions are welcome!
+
 A simple lightweight component to render and edit multi-line text in a flexible way.
 The `textBox` automatically adjusts its height to the number of lines, mimicking a **flexBox-style behavior**.
 Designed to be modular, easily extendable, and fully integrated with **Löve2D** and **Lua**.
@@ -7,6 +9,7 @@ Designed to be modular, easily extendable, and fully integrated with **Löve2D**
 ![TurtleTech](https://img.shields.io/badge/TurtleTech-Löve2D-🍕)
 ![CraftedInLua](https://img.shields.io/badge/Crafted_in-Lua-blue)
 ![NinjaDev](https://img.shields.io/badge/Ninja_Dev-🐢🍕-purple)
+![Project Status](https://img.shields.io/badge/status-in_development-orange)
 
 ---
 
