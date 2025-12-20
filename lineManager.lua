@@ -11,13 +11,13 @@ function LineManager.addToLines(t, box)
   local newLine = before .. t .. after
   --update the buffer
   box.lines[box.cursor.line] = newLine
-  local didWrap=LineManager.didLineWrap(box)
+  local didWrap = LineManager.didLineWrap(box)
   if didWrap then
-    local canWrap,pos=LineManager.spaceBreakWrap(box)
+    local canWrap, pos = LineManager.spaceBreakWrap(box)
     if canWrap then
       --reset cursor's position on the new line
-      box.cursor.line=box.cursor.line+1
-      box.cursor.col=pos
+      box.cursor.line = box.cursor.line + 1
+      box.cursor.col = pos
     end
   end
   --update cursor's position after capture
@@ -66,26 +66,26 @@ function LineManager.spaceBreakWrap(box, lineIndex)
 
   while spaceIndex do
     --now check if the space is not too close for width line's limit
-    spaceIndex=#text-spaceIndex+1
+    spaceIndex = #text - spaceIndex + 1
     print(spaceIndex)
     local movedText = text:sub(spaceIndex)
-    local newText = text:sub(1, spaceIndex-1)
+    local newText = text:sub(1, spaceIndex - 1)
     print(movedText)
     canWrap = font:getWidth(newText) < box.w
     if canWrap then
       box.lines[lineIndex] = newText
-      if not box.lines[lineIndex+1]then
-        box.lines[lineIndex+1]=""
+      if not box.lines[lineIndex + 1] then
+        box.lines[lineIndex + 1] = ""
       end
       box.lines[lineIndex + 1] = movedText .. box.lines[lineIndex + 1]
-      return true,#movedText
+      return true, #movedText
     end
-    reverse=newText:reverse()
-    spaceIndex=reverse:find("%s")
+    reverse = newText:reverse()
+    spaceIndex = reverse:find("%s")
   end
   --exit if there is no space
-   if not spaceIndex then
-    return false,0
+  if not spaceIndex then
+    return false, 0
   end
 end
 
