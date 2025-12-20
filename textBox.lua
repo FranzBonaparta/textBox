@@ -124,6 +124,12 @@ function TextBox:keypressed(key)
         self:setCanvas()
         return
     end
+    if key == "delete" then
+
+        LineManager.deleteNextChar(self)
+        self:setCanvas()
+        return
+    end
         if key == "left" then
         self.cursor.col = math.max(1, self.cursor.col - 1)
         return
