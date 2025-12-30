@@ -20,7 +20,7 @@ Designed to be modular, easily extendable, and fully integrated with **Löve2D**
 * [x] Dynamic height adjustment (like a FlexBox)
 * [x] Basic cursor movement and blinking
 * [x] Mouse-based positioning of the cursor
-* [x] Support for `backspace` and `delete`
+* [x] Support for `backspace`, `delete` and `enter`
 * [x] Placeholder text if input is empty
 * [x] Lightweight and dependency-free (apart from `classic.lua`)
 

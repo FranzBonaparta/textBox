@@ -14,10 +14,21 @@ function LineManager.addToLines(t, box)
   local didWrap = LineManager.didLineWrap(box)
   if didWrap then
     local canWrap, pos = LineManager.spaceBreakWrap(box)
-    if canWrap then
-      --reset cursor's position on the new line
-      box.cursor.line = box.cursor.line + 1
+    local remain = 0
+    if not canWrap then
+      --make hardWrap
+      remain = LineManager.makeHardWrap(box)
+    end
+    --reset cursor's position on the new line
+
+    if remain == 0 then
       box.cursor.col = pos
+      box.cursor.line = box.cursor.line + 1
+    else
+      if box.cursor.col >= remain then
+        box.cursor.line = box.cursor.line + 1
+        box.cursor.col = box.cursor.col - remain
+      end
     end
   end
   --update cursor's position after capture
@@ -39,6 +50,7 @@ local function deleteChar(box, offset)
   box.lines[lineIndex] = newText
   --debugText(newText)
   box.cursor.col = math.max(1, box.cursor.col + offset)
+  print(box.cursor.col, box.cursor.line)
 end
 function LineManager.deletePreviousChar(box)
   local offset = -1
@@ -48,6 +60,39 @@ end
 function LineManager.deleteNextChar(box)
   local offset = 0
   deleteChar(box, offset)
+end
+
+--make a jump line and shift existing ones
+function LineManager.insertLine(box)
+  local nextLine = box.cursor.line + 1
+  local oldText = ""
+  if box.lines[nextLine] then
+    --shift next lines
+    for i = #box.lines, nextLine, 1 do
+      oldText = box.lines[i]
+      box.lines[i + 1] = oldText
+    end
+  end
+  local newText = box.lines[box.cursor.line]:sub(box.cursor.col)
+  oldText = box.lines[box.cursor.line]:sub(1, box.cursor.col - 1)
+  box.lines[box.cursor.line] = oldText
+  box.lines[nextLine] = newText
+  --actualize cursor's position
+  box.cursor.line = box.cursor.line + 1
+  box.cursor.col = #newText + 1
+end
+
+-- try to detect if the cursor is on first's char position
+function LineManager.isFirstChar(box)
+  if box.cursor.col ~= 1 then
+    return false
+  end
+  print("first")
+  if box.lines[box.cursor.line - 1] then
+    box.cursor.line = box.cursor.line - 1
+    box.cursor.col = #box.lines[box.cursor.line] + 1
+    return true, box.cursor.line + 1
+  end
 end
 
 --just to know if a line may wrap
@@ -87,6 +132,23 @@ function LineManager.spaceBreakWrap(box, lineIndex)
   if not spaceIndex then
     return false, 0
   end
+end
+
+function LineManager.makeHardWrap(box, lineIndex)
+  lineIndex = lineIndex or box.cursor.line
+
+  --if no space we cut the word
+  local cutchar = box.lines[lineIndex]:sub(#box.lines[lineIndex])
+  local remain = box.lines[lineIndex]:sub(1, #box.lines[lineIndex] - 1)
+  local length = font:getWidth(remain) - 1
+  while length >= box.w do
+    cutchar = remain:sub(#remain) .. cutchar
+    remain = remain:sub(1, #remain - 1)
+    length = font:getWidth(remain)
+  end
+  box.lines[lineIndex] = remain
+  box.lines[lineIndex + 1] = cutchar .. (box.lines[lineIndex + 1] or "")
+  return #remain
 end
 
 return LineManager

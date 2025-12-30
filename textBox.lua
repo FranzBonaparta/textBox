@@ -35,7 +35,7 @@ function TextBox:setCanvas()
     --print(#self.lines, self.lineHeight * #self.lines)
     -- border
 
-    if #self.lines>=1 and #self.lines[1] > 0 then
+    if #self.lines>1 or #self.lines[1] > 0 then
         love.graphics.setColor(0, 0, 0)
     else
         love.graphics.setColor(0, 0, 0, 0.4)
@@ -119,7 +119,10 @@ function TextBox:keypressed(key)
     if not self.focused then return end
     local currentLine = self.lines[self.cursor.line]
     if key == "backspace" then
-
+        local isFirst, lineIndex=LineManager.isFirstChar(self)
+        if isFirst and #self.lines[lineIndex]==0 then
+            table.remove(self.lines,lineIndex)
+        end
         LineManager.deletePreviousChar(self)
         self:setCanvas()
         return
@@ -127,6 +130,11 @@ function TextBox:keypressed(key)
     if key == "delete" then
 
         LineManager.deleteNextChar(self)
+        self:setCanvas()
+        return
+    end
+    if key=="return" or key=="kpenter" then
+        LineManager.insertLine(self)
         self:setCanvas()
         return
     end
