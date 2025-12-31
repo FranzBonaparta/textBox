@@ -35,31 +35,84 @@ function LineManager.addToLines(t, box)
   box.cursor.col = box.cursor.col + 1
 end
 
-local function deleteChar(box, offset)
-  local lineIndex = box.cursor.line
-  if offset == -1 and lineIndex == 1 and box.cursor.col == 1 then
+local function deleteChar(box, offset, lineIndex, col)
+  col = col or box.cursor.col
+  lineIndex = lineIndex or box.cursor.line
+  if offset == -1 and lineIndex == 1 and col == 1 then
     return
   end
   --determine our text
   local actualLine = box.lines[lineIndex]
   local startText, endText =
-      box.cursor.col - 1 + offset, box.cursor.col + 1 + offset
+      col - 1 + offset, col + 1 + offset
   --delete previous caracter, before cursor's position
   local newText = actualLine:sub(1, math.max(0, startText)) .. actualLine:sub(endText)
   --save the new text
   box.lines[lineIndex] = newText
   --debugText(newText)
-  box.cursor.col = math.max(1, box.cursor.col + offset)
   print(box.cursor.col, box.cursor.line)
 end
 function LineManager.deletePreviousChar(box)
   local offset = -1
   deleteChar(box, offset)
+  box.cursor.col = math.max(1, box.cursor.col + offset)
+  LineManager.cleanLines(box, box.cursor.line + 1)
 end
 
 function LineManager.deleteNextChar(box)
   local offset = 0
   deleteChar(box, offset)
+  box.cursor.col = math.max(1, box.cursor.col + offset)
+  LineManager.cleanLines(box, box.cursor.line + 1)
+end
+--function to propagate the delete on following lines
+function LineManager.cleanLines(box, startLine)
+  local i = startLine
+  while i <= #box.lines do
+    local currentLine = box.lines[i]
+    local previousLine = box.lines[i - 1]
+
+    if not currentLine or not previousLine then break end
+
+    -- Try moving one or more characters if possible
+    local charMoved = false
+    while #currentLine > 0 do
+      local firstChar = currentLine:sub(1, 1)
+      local testLine = previousLine .. firstChar
+      if font:getWidth(testLine) < box.w then
+        --valid, then we add the  char
+        previousLine = testLine
+        currentLine = currentLine:sub(2)
+        charMoved = true
+      else
+        -- stop if we exceed the width
+        break
+      end
+    end
+    if not charMoved then
+      local canWrap, _ = LineManager.spaceBreakWrap(box, i)
+      if not canWrap then
+        --make hardWrap
+        LineManager.makeHardWrap(box, i)
+      end
+    end
+    box.lines[i - 1] = previousLine
+    box.lines[i] = currentLine
+
+    -- If the current line is empty, we delete it
+    if #box.lines[i] == 0 then
+      table.remove(box.lines, i)
+    else
+      i = i + 1
+    end
+  end
+
+  -- reposition the cursor properly
+  local curLine = box.cursor.line
+  if curLine > #box.lines then
+    box.cursor.line = #box.lines
+    box.cursor.col = #box.lines[#box.lines] + 1
+  end
 end
 
 --make a jump line and shift existing ones

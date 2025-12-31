@@ -124,6 +124,7 @@ function TextBox:keypressed(key)
             table.remove(self.lines,lineIndex)
         end
         LineManager.deletePreviousChar(self)
+        
         self:setCanvas()
         return
     end
