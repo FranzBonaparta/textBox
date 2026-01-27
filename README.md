@@ -11,6 +11,14 @@ A simple lightweight component to render and edit multi-line text in a flexible 
 The `textBox` automatically adjusts its height to the number of lines, mimicking a **flexBox-style behavior**.
 Designed to be modular, easily extendable, and fully integrated with **Löve2D** and **Lua**.
 
+## Project status
+
+Paused — last active development: December 2025.
+
+Main unresolved topic:
+
+- character deletion cascading across lines while respecting jump boundaries
+
 ![TurtleTech](https://img.shields.io/badge/TurtleTech-Löve2D-🍕)
 ![CraftedInLua](https://img.shields.io/badge/Crafted_in-Lua-blue)
 ![NinjaDev](https://img.shields.io/badge/Ninja_Dev-🐢🍕-purple)
