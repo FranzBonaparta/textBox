@@ -9,7 +9,7 @@ function TextBox:new(x, y, w, lh)
     self.w = w
     self.lineHeight = lh
 
-    self.lines = { "" }
+    self.lines = {{ content="",jump=false }}
     self.focused = false
 
     self.cursor = { col = 1, line = 1 }
@@ -35,7 +35,7 @@ function TextBox:setCanvas()
     --print(#self.lines, self.lineHeight * #self.lines)
     -- border
 
-    if #self.lines>1 or #self.lines[1] > 0 then
+    if #self.lines>1 or #self.lines[1].content > 0 then
         love.graphics.setColor(0, 0, 0)
     else
         love.graphics.setColor(0, 0, 0, 0.4)
@@ -44,11 +44,11 @@ function TextBox:setCanvas()
     --love.graphics.rectangle("line", 0, 0, self.w, self.lineHeight*#self.lines)
 
     -- text
-    if #self.lines == 1 and self.lines[1] == "" then
+    if #self.lines == 1 and self.lines[1].content == "" then
         love.graphics.print("Write here", self.padding, self.padding)
     else
         for i, line in ipairs(self.lines) do
-            love.graphics.print(line, self.padding, self.padding + ((i - 1) * self.lineHeight))
+            love.graphics.print(line.content, self.padding, self.padding + ((i - 1) * self.lineHeight))
         end
     end
     love.graphics.setCanvas()
@@ -59,7 +59,7 @@ function TextBox:draw()
     -- cursor to the end
     if self.focused and self.cursorVisible then
         love.graphics.setColor(0, 0, 0)
-        local before = self.lines[self.cursor.line]:sub(1, self.cursor.col - 1) or ""
+        local before = self:getTextLine(self.cursor.line):sub(1, self.cursor.col - 1) or ""
         local textWidth = font:getWidth(before)
         -- cursor height is depending of the font's height
         local height = self.lineHeight
@@ -73,15 +73,21 @@ function TextBox:draw()
         )
     end
 end
-
+function TextBox:getTextLine(index)
+    if self.lines[index] then
+        if self.lines[index].content then
+           return self.lines[index].content 
+        end
+    end
+end
 function TextBox:getCharIndexFromPixel(mx, my)
     local y = math.max(math.floor((my - self.y - self.padding) / self.lineHeight) + 1, 1)
-    local line = self.lines[y]
+    local line = self.lines[y].content
     local x = mx - (self.x + self.padding)
     if x < 0 then return 1, y end
 
     if not line then
-        local lastLine = self.lines[#self.lines]
+        local lastLine = self.lines[#self.lines].content
         return #lastLine + 1, #self.lines
     end
 
@@ -117,10 +123,10 @@ end
 
 function TextBox:keypressed(key)
     if not self.focused then return end
-    local currentLine = self.lines[self.cursor.line]
+    local currentLine = self.lines[self.cursor.line].content
     if key == "backspace" then
         local isFirst, lineIndex=LineManager.isFirstChar(self)
-        if isFirst and #self.lines[lineIndex]==0 then
+        if isFirst and #self.lines[lineIndex].content==0 then
             table.remove(self.lines,lineIndex)
         end
         LineManager.deletePreviousChar(self)
@@ -151,7 +157,7 @@ function TextBox:keypressed(key)
     if key == "up" then
         if self.lines[self.cursor.line - 1] then
             self.cursor.line = self.cursor.line - 1
-            currentLine = self.lines[self.cursor.line]
+            currentLine = self.lines[self.cursor.line].content
             self.cursor.col = #currentLine >= self.cursor.col and self.cursor.col or #currentLine + 1
             return
         end
@@ -159,7 +165,7 @@ function TextBox:keypressed(key)
     if key == "down" then
         if self.lines[self.cursor.line + 1] then
             self.cursor.line = self.cursor.line + 1
-            currentLine = self.lines[self.cursor.line]
+            currentLine = self.lines[self.cursor.line].content
             self.cursor.col = #currentLine >= self.cursor.col and self.cursor.col or #currentLine + 1
             return
         end
