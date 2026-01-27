@@ -1,6 +1,11 @@
 # textBox
 
-⚠️ This component is still in the prototyping phase. Do not use in production without modification. Contributions and suggestions are welcome!
+⚠️ This project is an experimental prototype.
+
+It was developed as a focused exploration and is currently **on hold**.
+The code is functional in parts but incomplete and not intended for production use.
+
+The repository remains public for learning, reference, and experimentation purposes.
 
 A simple lightweight component to render and edit multi-line text in a flexible way.
 The `textBox` automatically adjusts its height to the number of lines, mimicking a **flexBox-style behavior**.
